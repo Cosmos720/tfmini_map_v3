@@ -9,12 +9,6 @@ class Tuple implements Comparable<Tuple>{
 
     @Override
     int compareTo(Tuple t){
-        if(this.distance < t.distance){
-            return -1;
-        } else if (this.distance > t.distance) {
-            return 1;
-        } else {
-            return 0;
-        }
+        return (this.distance - t.distance)<0?-1:1;
     }
 }

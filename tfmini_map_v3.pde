@@ -102,7 +102,7 @@ void computeEnveloppe() {
   enveloppe[0] = 0;
   enveloppe[1] = 1;
   for (int i = 3; i<363; i++) {
-    while ((pile >=1) && prodVec(enveloppe[pile-1], enveloppe[pile], i) > 0) //<>//
+    while ((pile >=1) && prodVec(enveloppe[pile-1], enveloppe[pile], i) > 0)
       pile--;
     pile++;
     enveloppe[pile] = i;
@@ -175,7 +175,7 @@ void setup() {
     /*if (i==121)
       stroke(0, 255, 0);
     else if (i==242)
-      stroke(0, 0, 255);*/                                                     /*
+      stroke(0, 0, 255);*//*
     stroke(i, 100, 100);
     point((points[i][0] - xmin), (points[i][1] - ymin));
   }
@@ -203,6 +203,8 @@ int[][] mesures = new int[121][3];
 FloatList angles = new FloatList();
 int pile = 1;
 float xmin, ymin;
+boolean convexe = false;
+boolean pict = false;
 
 void minXY() {
   int minID = 0;
@@ -238,7 +240,7 @@ void sortPoints() {
     if (j != i)
       insertPointsAngles(i, j);
   }
-  println("angles: "+angles);
+  //println("angles: "+angles);
 }
 
 void insertPointsAngles(int i, int j){
@@ -248,7 +250,7 @@ void insertPointsAngles(int i, int j){
   angles.remove(i);
 
   points.add(j, tmpP);
-  angles = new FloatList((float[])splice(angles.toArray() ,tmpA ,j));
+  angles = new FloatList((float[])splice(angles.toArray(), tmpA, j));
 }
 
 float prodVec3(int a, int b, int c) {
@@ -259,13 +261,14 @@ float prodVec3(int a, int b, int c) {
 // Graham scan
 int[] computeEnveloppe() {
   IntList enveloppe = new IntList();
-  enveloppe.set(0,0);
-  enveloppe.set(1,1);
+  enveloppe.set(0, 0);
+  enveloppe.set(1, 1);
 
   for (int i = 3; i<363; i++) {
     while ((pile >=1) && prodVec3(enveloppe.get(pile-1), enveloppe.get(pile), i) > 0){
       pile--;
-      println(pile);}
+      println(pile);
+      }
     pile++;
     println("pile = "+pile+" for "+i);
     enveloppe.set(pile, i);
@@ -273,7 +276,6 @@ int[] computeEnveloppe() {
   println("enveloppe: "+enveloppe);
   for(int i=enveloppe.size()-1; i>pile+1; i--){
     enveloppe.remove(i);
-    println("rem");
   }
   println("enveloppe raccourci: "+enveloppe);
   return enveloppe.toArray();
@@ -313,7 +315,6 @@ void setup() {
 
   minXY();
   sortPoints();
-  int[] enveloppe = computeEnveloppe();
 
   colorMode(HSB, 360, 100, 100);
   background(255);
@@ -326,21 +327,45 @@ void setup() {
     stroke(i, 100, 100);
     point((points.get(i).xCoord - xmin), (points.get(i).yCoord - ymin));
   }
-
-  println("pile = " + pile);
-  for (int i=0; i<=pile; i++) {
-    stroke(0, 0, 0);
-    strokeWeight(15);
-    point(points.get(enveloppe[i]).xCoord - xmin, points.get(enveloppe[i]).yCoord - ymin);
-    println("enveloppe["+i+"]: "+enveloppe[i]);
+  
+  if(convexe & !pict){
+    int[] enveloppe = computeEnveloppe();
+    println("pile = " + pile);
+    for (int i=0; i<=pile; i++) {
+      stroke(0, 0, 0);
+      strokeWeight(15);
+      point(points.get(enveloppe[i]).xCoord - xmin, points.get(enveloppe[i]).yCoord - ymin);
+      println("enveloppe["+i+"]: "+enveloppe[i]);
+      strokeWeight(10);
+      stroke(0, 0, 50);
+      line(points.get(enveloppe[i]).xCoord - xmin, points.get(enveloppe[i]).yCoord - ymin, points.get(enveloppe[(i+1)%(pile+1)]).xCoord - xmin, points.get(enveloppe[(i+1)%(pile+1)]).yCoord - ymin);
+    }
+      
     strokeWeight(10);
-    stroke(0,0,50);
-    line(points.get(enveloppe[i]).xCoord - xmin, points.get(enveloppe[i]).yCoord - ymin,points.get(enveloppe[(i+1)%(pile+1)]).xCoord - xmin, points.get(enveloppe[(i+1)%(pile+1)]).yCoord - ymin);
+    stroke(128);
+    point(-xmin, -ymin);
+    save("out/enveloppeConvexe.png");
+  }else if(!convexe & !pict){
+    //println(points);
+      ArrayList<Points> enveloppe = computeConcaveHull(points, 3);
+      println("taille enveloppe = "+ enveloppe.size());
+      for(int i = 0; i<enveloppe.size(); i++){
+        stroke(0, 0, 0);
+        strokeWeight(15);
+        point(enveloppe.get(i).xCoord-xmin, enveloppe.get(i).yCoord - ymin);
+        println("enveloppe["+i+"]: "+enveloppe.get(i));
+        strokeWeight(10);
+        stroke(0, 0, 50);
+        line(enveloppe.get(i).xCoord-xmin, enveloppe.get(i).yCoord-ymin, enveloppe.get((i+1)%(enveloppe.size())).xCoord-xmin, enveloppe.get((i+1)%(enveloppe.size())).yCoord-ymin);
+      }
+      strokeWeight(10);
+      stroke(128);
+      point(-xmin, -ymin);
+      save("out/enveloppeConcave.png");
+  }else{
+    save("out/LidarPicture.png");
+    println(points);
   }
-    
-  strokeWeight(10);
-  stroke(128);
-  point(-xmin, -ymin);
-  save("out/enveloppeConvexe.png");
+
   exit();
 }

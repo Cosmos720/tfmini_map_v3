@@ -31,11 +31,12 @@ class Points implements Comparable<Points>{
 
     //Euclidean distance
     float distance(Points p){
-        return sqrt(pow(this.xCoord - p.xCoord, 2) - pow(this.yCoord - p.yCoord, 2));
+        return sqrt(pow(this.xCoord - p.xCoord, 2) + pow(this.yCoord - p.yCoord, 2));
     }
 
     float[] vectorize(Points p){
-        return {p.xCoord-this.xCoord, p.yCoord-this.yCoord};
+        float[] tmp = {p.xCoord-this.xCoord, p.yCoord-this.yCoord};
+        return tmp;
     }
     
     @Override
