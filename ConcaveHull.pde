@@ -39,14 +39,11 @@ ArrayList<Points> computeConcaveHull(ArrayList<Points> pointsList, int k) {
     }
     if(its==true & k<dataset.size()){
       println(k + " Que des intersections \n"+hull);
-      //return hull;
       return computeConcaveHull(pointsList, k+1);
-    } else if (its==true) {
-      return hull;
     }
     currentPoint = cPoints.get(i);
     hull.add(currentPoint);
-    previousAngle = angleCW(hull.get(step-1), hull.get(step));//+(180-previousAngle);
+    previousAngle = angleCW(hull.get(step-1), hull.get(step));
     dataset.remove(currentPoint);
     step++;
   }
@@ -59,9 +56,86 @@ ArrayList<Points> computeConcaveHull(ArrayList<Points> pointsList, int k) {
   if(!allInside & k<dataset.size()){
     println(k + " not all inside \n"+hull);
     return computeConcaveHull(pointsList, k+1);
-    //return hull;
   }
   println(k);
+  return hull;
+}
+
+// iteratively
+ArrayList<Points> computeConcaveHullNew(ArrayList<Points> pointsList, int k){
+  k = max(k, 3);
+  ArrayList<Points> dataset = cleanList(pointsList);
+  if(dataset.size()<3){
+    return null;
+  }
+  if(dataset.size()==3){
+    return dataset;
+  }
+  k = min(k, dataset.size()-1);
+  Points firstPoint = findMinYPoint(dataset);
+  ArrayList<Points> hull = new ArrayList<Points>();
+  hull.add(firstPoint);
+  Points currentPoint = firstPoint;
+  dataset.remove(firstPoint);
+  float previousAngle = 0;
+  int step = 1;
+  boolean valid = false;
+  int kNeigh = k;
+  while(!valid){
+    while (((currentPoint!=firstPoint) || (step==1)) && dataset.size()>0) {
+      if(step==4){
+        dataset.add(firstPoint);
+      }
+      ArrayList<Points> kNearestPoints = nearestPoints(dataset, currentPoint, k);
+      ArrayList<Points> cPoints = sortByAngle(kNearestPoints, currentPoint, previousAngle);
+      boolean its = true;
+      int i = -1;
+      while ((its==true)&(i<cPoints.size()-1)) {
+        i++;
+        int lastPoint = 0;
+        if(cPoints.get(i).equals(firstPoint)){
+          lastPoint = 1;
+        }
+        int j = 1;
+        its = false;
+        while ((its==false)&(j<hull.size()-lastPoint-1)) {
+          its = interstectsQ(hull.get(step-1), cPoints.get(i), hull.get(step-j-1), hull.get(step-j));
+          j++;
+        }
+      }
+      if(its==true & k<dataset.size()){
+        println(step + " Que des intersections \n"+hull);
+        step--;
+        currentPoint = hull.get(step);
+        dataset.add(currentPoint);
+        k++;
+        continue;
+      }else{
+        k = kNeigh;
+      }
+      currentPoint = cPoints.get(i);
+      hull.add(currentPoint);
+      previousAngle = angleCW(hull.get(step-1), hull.get(step));
+      dataset.remove(currentPoint);
+      step++;
+    }
+    boolean allInside = true;
+    int i = dataset.size()-1;
+    while(allInside & i>0){
+      allInside = pointInPolygonQ(dataset.get(i), hull);
+      i--;
+    }
+    if(!allInside & k<dataset.size()){
+      println(step + " not all inside \n"+hull);
+      step--;
+      currentPoint = hull.get(step);
+      dataset.add(currentPoint);
+      k++;
+      continue;
+    }else{
+      valid = true;
+    }
+  }
   return hull;
 }
 

@@ -347,7 +347,7 @@ void setup() {
     save("out/enveloppeConvexe.png");
   }else if(!convexe & !pict){
     //println(points);
-      ArrayList<Points> enveloppe = computeConcaveHull(points, 3);
+      ArrayList<Points> enveloppe = computeConcaveHullNew(points, 3);
       println("taille enveloppe = "+ enveloppe.size());
       for(int i = 0; i<enveloppe.size(); i++){
         stroke(0, 0, 0);
@@ -361,7 +361,7 @@ void setup() {
       strokeWeight(10);
       stroke(128);
       point(-xmin, -ymin);
-      save("out/enveloppeConcave.png");
+      save("out/enveloppeConcaveNew.png");
   }else{
     save("out/LidarPicture.png");
     println(points);
