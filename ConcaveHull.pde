@@ -1,4 +1,4 @@
-//  Concave Hull k-nearest neighbors OG Algorithm
+//  *Concave Hull k-nearest neighbors OG Algorithm
 ArrayList<Points> computeConcaveHull(ArrayList<Points> pointsList, int k) {
   k = max(k, 3);
   ArrayList<Points> dataset = cleanList(pointsList);
@@ -33,7 +33,7 @@ ArrayList<Points> computeConcaveHull(ArrayList<Points> pointsList, int k) {
       int j = 1;
       its = false;
       while ((its==false)&(j<hull.size()-lastPoint-1)) {
-        its = interstectsQ(hull.get(step-1), cPoints.get(i), hull.get(step-j-1), hull.get(step-j));
+        its = intersectsQ(hull.get(step-1), cPoints.get(i), hull.get(step-j-1), hull.get(step-j));
         j++;
       }
     }
@@ -61,8 +61,10 @@ ArrayList<Points> computeConcaveHull(ArrayList<Points> pointsList, int k) {
   return hull;
 }
 
-// iteratively
+// *iteratively
+//! Je suis BLOQUÉ
 ArrayList<Points> computeConcaveHullNew(ArrayList<Points> pointsList, int k){
+  int nb=0;
   k = max(k, 3);
   ArrayList<Points> dataset = cleanList(pointsList);
   if(dataset.size()<3){
@@ -80,9 +82,12 @@ ArrayList<Points> computeConcaveHullNew(ArrayList<Points> pointsList, int k){
   float previousAngle = 0;
   int step = 1;
   boolean valid = false;
+  int kMAX = k;
   int kNeigh = k;
+  ArrayList<Points> tmp = new ArrayList<Points>();
   while(!valid){
-    while (((currentPoint!=firstPoint) || (step==1)) && dataset.size()>0) {
+    while((nb != nbIter) && ((currentPoint!=firstPoint) || (step==1)) && dataset.size()>0) {
+      nb++;
       if(step==4){
         dataset.add(firstPoint);
       }
@@ -99,16 +104,20 @@ ArrayList<Points> computeConcaveHullNew(ArrayList<Points> pointsList, int k){
         int j = 1;
         its = false;
         while ((its==false)&(j<hull.size()-lastPoint-1)) {
-          its = interstectsQ(hull.get(step-1), cPoints.get(i), hull.get(step-j-1), hull.get(step-j));
+          its = intersectsQ(hull.get(step-1), cPoints.get(i), hull.get(step-j-1), hull.get(step-j));
           j++;
         }
       }
-      if(its==true & k<dataset.size()){
-        println(step + " Que des intersections \n"+hull);
-        step--;
-        currentPoint = hull.get(step);
-        dataset.add(currentPoint);
-        k++;
+      if(its==true /*& k<dataset.size()*/){
+        //println(step + " Que des intersections => iteration\n"+hull);
+        if(k>=kMAX){
+          step--;
+          tmp.add(currentPoint);
+          currentPoint = hull.get(step);
+          hull.remove(step);
+        } else {
+          k++;
+        }
         continue;
       }else{
         k = kNeigh;
@@ -125,17 +134,26 @@ ArrayList<Points> computeConcaveHullNew(ArrayList<Points> pointsList, int k){
       allInside = pointInPolygonQ(dataset.get(i), hull);
       i--;
     }
-    if(!allInside & k<dataset.size()){
-      println(step + " not all inside \n"+hull);
+    if(!allInside /*& k<dataset.size()*/ & nb < nbIter){
+      //println(step + " not all inside => recompute\n"+hull);
       step--;
       currentPoint = hull.get(step);
-      dataset.add(currentPoint);
-      k++;
+      //println(step + " " + currentPoint);
+      hull.remove(step);
+      if(currentPoint == firstPoint){
+        //println("remove et add first");
+        dataset.add(firstPoint);
+      }
+      kMAX++;
+      dataset.addAll(tmp.isEmpty()?tmp:cleanList(tmp));
+      tmp.clear();
       continue;
     }else{
+      println("allInside:" + allInside);
       valid = true;
     }
   }
+  println(k + " " + kMAX);
   return hull;
 }
 
@@ -143,14 +161,14 @@ boolean pointInPolygonQ(Points p, ArrayList<Points> hull){
   Points ray = new Points(p.xCoord, findMinYPoint(hull).yCoord-1);
   boolean interieur = false;
   for(int i = 0; i<hull.size(); i++){
-    if(interstectsQ(ray, p, hull.get(i), hull.get((i+1)%hull.size()))){
+    if(intersectsQ(ray, p, hull.get(i), hull.get((i+1)%hull.size()))){
       interieur = !interieur;
     }
   }
   return interieur;
 }
 
-boolean interstectsQ(Points a, Points b, Points c, Points d){
+boolean intersectsQ(Points a, Points b, Points c, Points d){
   float[] AB = a.vectorize(b);
   float[] AC = a.vectorize(c);
   float[] AD = a.vectorize(d);

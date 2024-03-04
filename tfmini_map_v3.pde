@@ -205,6 +205,7 @@ int pile = 1;
 float xmin, ymin;
 boolean convexe = false;
 boolean pict = false;
+int nbIter = 1;
 
 void minXY() {
   int minID = 0;
@@ -345,7 +346,7 @@ void setup() {
     stroke(128);
     point(-xmin, -ymin);
     save("out/enveloppeConvexe.png");
-  }else if(!convexe & !pict){
+  }else if(!convexe & !pict & false){
     //println(points);
       ArrayList<Points> enveloppe = computeConcaveHullNew(points, 3);
       println("taille enveloppe = "+ enveloppe.size());
@@ -367,5 +368,42 @@ void setup() {
     println(points);
   }
 
-  exit();
+  //exit();
+}
+
+//*debug
+void draw(){
+  background(255);
+  scale(0.25);
+  translate(50, 50);
+  strokeWeight(3);
+  stroke(255, 0, 0);
+  frameRate(6);
+
+  for (int i=0; i<363; i++) {
+    strokeWeight(10);
+    stroke(i, 100, 100);
+    point((points.get(i).xCoord - xmin), (points.get(i).yCoord - ymin));
+  }
+
+  ArrayList<Points> enveloppe = computeConcaveHullNew(points, 3);
+  println("taille enveloppe = "+ enveloppe.size());
+  for(int i = 0; i<enveloppe.size(); i++){
+    stroke(0, 0, 0);
+    strokeWeight(50);
+    point(enveloppe.get(i).xCoord-xmin, enveloppe.get(i).yCoord - ymin);
+    //println("enveloppe["+i+"]: "+enveloppe.get(i));
+    strokeWeight(10);
+    stroke(0, 0, 50);
+    line(enveloppe.get(i).xCoord-xmin, enveloppe.get(i).yCoord-ymin, enveloppe.get((i+1)%(enveloppe.size())).xCoord-xmin, enveloppe.get((i+1)%(enveloppe.size())).yCoord-ymin);
+  }
+  strokeWeight(10);
+  stroke(128);
+  point(-xmin, -ymin);
+  nbIter++;
+}
+
+void keyPressed() {
+  if (key == ' ')
+    nbIter++;
 }
