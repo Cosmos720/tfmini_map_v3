@@ -264,18 +264,16 @@ int[] computeEnveloppe() {
   IntList enveloppe = new IntList();
   enveloppe.set(0, 0);
   enveloppe.set(1, 1);
-
+  pile=1;
   for (int i = 3; i<363; i++) {
     while ((pile >=1) && prodVec3(enveloppe.get(pile-1), enveloppe.get(pile), i) > 0){
       pile--;
-      println(pile);
       }
     pile++;
-    println("pile = "+pile+" for "+i);
     enveloppe.set(pile, i);
   }
   println("enveloppe: "+enveloppe);
-  for(int i=enveloppe.size()-1; i>pile+1; i--){
+  for(int i=enveloppe.size()-1; i>pile; i--){
     enveloppe.remove(i);
   }
   println("enveloppe raccourci: "+enveloppe);
@@ -346,8 +344,9 @@ void setup() {
     stroke(128);
     point(-xmin, -ymin);
     save("out/enveloppeConvexe.png");
-  }else if(!convexe & !pict & false){
+  }else if(!convexe & !pict){
     //println(points);
+    /*
       ArrayList<Points> enveloppe = computeConcaveHullNew(points, 3);
       println("taille enveloppe = "+ enveloppe.size());
       for(int i = 0; i<enveloppe.size(); i++){
@@ -362,6 +361,36 @@ void setup() {
       strokeWeight(10);
       stroke(128);
       point(-xmin, -ymin);
+      */
+      ArrayList<Edge> concaveHull = computeConcaveHullFromConvexe(points, 5);
+      println("taille enveloppe = "+ concaveHull.size());
+      for(int i=0; i<concaveHull.size(); i++){
+        stroke(0, 0, 0);
+        strokeWeight(15);
+        point(concaveHull.get(i).point1.xCoord-xmin, concaveHull.get(i).point1.yCoord - ymin);
+        point(concaveHull.get(i).point2.xCoord-xmin, concaveHull.get(i).point2.yCoord - ymin);
+        strokeWeight(10);
+        stroke(0, 0, 50);
+        line(concaveHull.get(i).point1.xCoord-xmin, concaveHull.get(i).point1.yCoord-ymin, concaveHull.get(i).point2.xCoord-xmin, concaveHull.get(i).point2.yCoord-ymin);
+      }
+      strokeWeight(10);
+      stroke(128);
+      point(-xmin, -ymin);
+      /*
+      ArrayList<Points> hull = new ArrayList<Points>();
+      for(int i=0 ; i<concaveHull.size(); i++){
+        hull.add(concaveHull.get(i).point1);
+        hull.add(concaveHull.get(i).point2);
+      }
+      hull = cleanList(hull);
+      boolean allInside = true;
+      int i = hull.size()-1;
+      while(allInside & i>0){
+        allInside = pointInPolygonQ(points.get(i), hull);
+        i--;
+      }
+      println("allInside: "+allInside);
+      */
       save("out/enveloppeConcaveNew.png");
   }else{
     save("out/LidarPicture.png");
@@ -371,7 +400,8 @@ void setup() {
   //exit();
 }
 
-//*debug
+//debug
+
 void draw(){
   background(255);
   scale(0.25);
@@ -386,21 +416,20 @@ void draw(){
     point((points.get(i).xCoord - xmin), (points.get(i).yCoord - ymin));
   }
 
-  ArrayList<Points> enveloppe = computeConcaveHullNew(points, 3);
-  println("taille enveloppe = "+ enveloppe.size());
-  for(int i = 0; i<enveloppe.size(); i++){
+  ArrayList<Edge> concaveHull = computeConcaveHullFromConvexe(points, 0.5);
+  println("taille enveloppe = "+ concaveHull.size());
+  for(int i=0; i<concaveHull.size(); i++){
     stroke(0, 0, 0);
-    strokeWeight(50);
-    point(enveloppe.get(i).xCoord-xmin, enveloppe.get(i).yCoord - ymin);
-    //println("enveloppe["+i+"]: "+enveloppe.get(i));
+    strokeWeight(15);
+    point(concaveHull.get(i).point1.xCoord-xmin, concaveHull.get(i).point1.yCoord - ymin);
+    point(concaveHull.get(i).point2.xCoord-xmin, concaveHull.get(i).point2.yCoord - ymin);
     strokeWeight(10);
     stroke(0, 0, 50);
-    line(enveloppe.get(i).xCoord-xmin, enveloppe.get(i).yCoord-ymin, enveloppe.get((i+1)%(enveloppe.size())).xCoord-xmin, enveloppe.get((i+1)%(enveloppe.size())).yCoord-ymin);
+    line(concaveHull.get(i).point1.xCoord-xmin, concaveHull.get(i).point1.yCoord-ymin, concaveHull.get(i).point2.xCoord-xmin, concaveHull.get(i).point2.yCoord-ymin);
   }
   strokeWeight(10);
   stroke(128);
   point(-xmin, -ymin);
-  nbIter++;
 }
 
 void keyPressed() {

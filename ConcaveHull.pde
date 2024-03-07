@@ -108,7 +108,7 @@ ArrayList<Points> computeConcaveHullNew(ArrayList<Points> pointsList, int k){
           j++;
         }
       }
-      if(its==true /*& k<dataset.size()*/){
+      if(its==true){
         //println(step + " Que des intersections => iteration\n"+hull);
         if(k>=kMAX){
           step--;
@@ -134,7 +134,7 @@ ArrayList<Points> computeConcaveHullNew(ArrayList<Points> pointsList, int k){
       allInside = pointInPolygonQ(dataset.get(i), hull);
       i--;
     }
-    if(!allInside /*& k<dataset.size()*/ & nb < nbIter){
+    if(!allInside & nb < nbIter){
       //println(step + " not all inside => recompute\n"+hull);
       step--;
       currentPoint = hull.get(step);
@@ -155,6 +155,79 @@ ArrayList<Points> computeConcaveHullNew(ArrayList<Points> pointsList, int k){
   }
   println(k + " " + kMAX);
   return hull;
+}
+
+ArrayList<Edge> computeConcaveHullFromConvexe(ArrayList<Points> pointsList, float n){
+  ArrayList<Points> points = (ArrayList<Points>)pointsList.clone();
+  int[] hull = computeEnveloppe();
+  int nb=0;
+  ArrayList<Edge> convexeHull = new ArrayList<Edge>();
+  for(int i = 0; i<hull.length; i++){
+    convexeHull.add(new Edge(points.get(hull[i]), points.get(hull[(i+1)%hull.length])));
+  }
+  for(int i = hull.length-1; i>=0; i--){
+    points.remove(hull[i]);
+  }
+  ArrayList<Edge> concaveHull = (ArrayList<Edge>)convexeHull.clone();
+  for(int i=0; i<concaveHull.size(); i++){
+    if (nb<nbIter){
+      nb++;
+    }else{
+      break;
+    }
+    println(concaveHull.size());
+    Edge[] neighbors = neighborsEdge(concaveHull.get(i), concaveHull);
+    Points pk = nearestInnerPoint(concaveHull.get(i), neighbors, points);
+    if (pk==null){
+      continue;
+    }
+    float eh = concaveHull.get(i).distance();
+    float dd = decisionDistance(pk, concaveHull.get(i));
+    if ((eh/dd)>n){
+      Edge e = concaveHull.remove(i);
+      concaveHull.add(new Edge(pk, e.point1));
+      concaveHull.add(new Edge(pk, e.point2));
+      points.remove(pk);
+
+    }
+  }
+  println(concaveHull);
+  return concaveHull;
+}
+
+float decisionDistance(Points p, Edge e){
+  return min(p.distance(e.point1), p.distance(e.point2));
+}
+
+Points nearestInnerPoint(Edge e, Edge[] neighbors, ArrayList<Points> pointsList){
+  ArrayList<Points> tmp = (ArrayList<Points>)pointsList.clone();
+  tmp.sort((p1, p2) -> (distEdge(p1, e) < distEdge(p2, e))?-1:1);
+  for(int i=0; i<tmp.size(); i++){
+    if(distEdge(tmp.get(i), neighbors[0])>distEdge(tmp.get(i), e) && distEdge(tmp.get(i), neighbors[1])>distEdge(tmp.get(i), e)){
+      return tmp.get(i);
+    }
+  }
+  return null;
+}
+
+Edge[] neighborsEdge(Edge e, ArrayList<Edge> edges){
+  Edge[] res = new Edge[2];
+  for(int i=0; i<edges.size(); i++){
+    if(edges.get(i).equals(e)){
+      continue;
+    }
+    if(edges.get(i).point1.equals(e.point1) || edges.get(i).point2.equals(e.point1)){
+      res[0] = edges.get(i);
+    }
+    if(edges.get(i).point1.equals(e.point2) || edges.get(i).point2.equals(e.point2)){
+      res[1] = edges.get(i);
+    }
+  }
+  return res;
+}
+
+float distEdge(Points p, Edge e){
+  return min(p.distance(e.point1), p.distance(e.point2));
 }
 
 boolean pointInPolygonQ(Points p, ArrayList<Points> hull){
