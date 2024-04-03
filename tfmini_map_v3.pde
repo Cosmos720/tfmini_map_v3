@@ -198,16 +198,17 @@ void setup() {
   exit();
 }*/
 
-ArrayList<Points> points = new ArrayList<Points>();
-int[][] mesures = new int[121][3];
-FloatList angles = new FloatList();
-int pile = 1;
+ArrayList<Points> points;
+int[][] mesures;
+FloatList angles;
+int pile;
 float xmin, ymin;
 boolean convexe = false;
 boolean pict = false;
 int nbIter = 1;
 boolean debug = false;
 boolean algo1 = false;
+int epsilon = 25;
 
 void minXY() {
   int minID = 0;
@@ -270,7 +271,7 @@ int[] computeEnveloppe() {
   for (int i = 2; i<points.size(); i++) {
     while ((pile >=1) && prodVec3(enveloppe.get(pile-1), enveloppe.get(pile), i) > 0){
       pile--;
-      }
+    }
     pile++;
     enveloppe.set(pile, i);
   }
@@ -282,11 +283,38 @@ int[] computeEnveloppe() {
   return enveloppe.toArray();
 }
 
+ArrayList<Edge> sortEdgeHull(ArrayList<Edge> hull, Points min){
+  ArrayList<Edge> sortedHull = new ArrayList<Edge>();
+  //println(hull);
+  for(Edge e: hull){
+    if(e.point1.equals(min)){
+      sortedHull.add(e);
+      //println("found" + e);
+      break;
+    }
+  }
+  loop:
+  for(int i=0; i<hull.size(); i++){
+    for(Edge e: hull){
+      if(sortedHull.get(i).point2.equals(e.point1)){
+        sortedHull.add(e);
+        //println("found" + e);
+        continue loop;
+      }
+    }
+    println("nothing found");
+    break;
+  }
+  return sortedHull;
+}
+
 void setup() {
   size(1000, 1000);
   scale(0.25);
   BufferedReader log = createReader("../LaLigneRouge_v2_0/output/LIDAR.log");
   String line = null;
+  angles = new FloatList();
+  mesures = new int[121][3];
   try {
     while ((line = log.readLine()) != null) {
       String[] pieces = split(line, " -> ");
@@ -311,7 +339,7 @@ void setup() {
       int d = mesures[i][j];
       float l = sqrt(r * r + d * d - 2 * r * d * cos(gamma));
       float alpha = asin(d * sin(gamma) / l) + j * TWO_PI / 3;
-      points.add(new Points(l * cos(alpha), (500 - l * sin(alpha))*-1));
+      points.add(new Points(l * cos(alpha), (- l * sin(alpha))*-1));
     }
 
   minXY();
@@ -375,8 +403,11 @@ void setup() {
       int after = millis();
       println("time in millis: "+(after-before));
       println("taille enveloppe = "+ concaveHull.size());
-      float xMean=0;
-      float yMean=0;
+      ArrayList<Edge> sortedHull = sortEdgeHull(concaveHull, points.get(0));
+      ArrayList<Points> concaveHullPts = new ArrayList<Points>();
+      for (Edge e : sortedHull) {
+        concaveHullPts.add(e.point1);
+      }
       for(int i=0; i<concaveHull.size(); i++){
         stroke(0, 0, 0);
         strokeWeight(15);
@@ -385,15 +416,32 @@ void setup() {
         strokeWeight(10);
         stroke(0, 0, 50);
         line(concaveHull.get(i).point1.xCoord-xmin, concaveHull.get(i).point1.yCoord-ymin, concaveHull.get(i).point2.xCoord-xmin, concaveHull.get(i).point2.yCoord-ymin);
-        xMean += concaveHull.get(i).point1.xCoord-xmin;
-        yMean += concaveHull.get(i).point1.yCoord-ymin;
       }
-      strokeWeight(10);
-      stroke(128);
-      point(-xmin, -ymin);
+      Object[] hullDivided = hullDivider(concaveHullPts);
+      ArrayList<Points> hull1 = (ArrayList<Points>)hullDivided[0];
+      ArrayList<Points> hull2 = (ArrayList<Points>)hullDivided[1];
+      ArrayList<Points> res1 = douglasPeucker(hull1, epsilon);
+      ArrayList<Points> res2 = douglasPeucker(hull2, epsilon);
+      for(int i=0; i<res1.size()-1; i++){
+        stroke(240, 100, 100);
+        strokeWeight(15);
+        point(res1.get(i).xCoord-xmin, res1.get(i).yCoord - ymin);
+        strokeWeight(10);
+        stroke(240, 100, 100, 75);
+        line(res1.get(i).xCoord-xmin, res1.get(i).yCoord-ymin, res1.get((i+1)%(res1.size())).xCoord-xmin, res1.get((i+1)%(res1.size())).yCoord-ymin);
+      }
+      for(int i=0; i<res2.size()-1; i++){
+        stroke(0, 100, 100);
+        strokeWeight(15);
+        point(res2.get(i).xCoord-xmin, res2.get(i).yCoord - ymin);
+        strokeWeight(10);
+        stroke(0, 100, 100, 75);
+        line(res2.get(i).xCoord-xmin, res2.get(i).yCoord-ymin, res2.get((i+1)%(res2.size())).xCoord-xmin, res2.get((i+1)%(res2.size())).yCoord-ymin);
+      }
+      println(concaveHullPts.size() + " points -> " + (res1.size() + res2.size() - 2) + " points");
       strokeWeight(20);
       stroke(0, 100, 100);
-      point(xMean/concaveHull.size(), yMean/concaveHull.size());
+      point(-xmin, -ymin);
       save("out/enveloppeConcaveNew.png");
     }
   }else{

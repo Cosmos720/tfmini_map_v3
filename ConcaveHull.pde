@@ -203,7 +203,7 @@ ArrayList<Edge> computeConcaveHullFromConvexe(ArrayList<Points> pointsList, floa
     float dd = distEdge(pk, concaveHull.get(i));//decisionDistance(pk, concaveHull.get(i));
     if ((eh/dd)>n){
       del.append(i);
-      concaveHull.add(new Edge(pk, concaveHull.get(i).point1));
+      concaveHull.add(new Edge(concaveHull.get(i).point1, pk));
       concaveHull.add(new Edge(pk, concaveHull.get(i).point2));
       points.remove(pk);
     }
