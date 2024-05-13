@@ -314,15 +314,18 @@ void setup() {
   BufferedReader log = createReader("../LaLigneRouge_v2_0/output/LIDAR.log");
   String line = null;
   angles = new FloatList();
-  mesures = new int[121][3];
+  mesures = new int[120][3];
   try {
     while ((line = log.readLine()) != null) {
       String[] pieces = split(line, " -> ");
       String[] pieces2 = split(pieces[1], ",");
+      if(int(pieces2[2]) == 0){
+        continue;
+      }
       int i = int(pieces2[0]);  //deviation angle record
       int j = int(pieces2[1]);  //lidar "id" who did that record
       int d = int(pieces2[2]);  //distance recorded
-      mesures[i][j] = d;
+      mesures[i-1][j] = d;
     }
     log.close();
   } 
@@ -333,13 +336,13 @@ void setup() {
   points = new ArrayList<Points>();
   float r = 18;
 
-  for (int i=0; i<121; i++)
+  for (int i=0; i<120; i++)
     for (int j=0; j<3; j++) {
       float gamma = PI - radians(i - 60);
       int d = mesures[i][j];
       float l = sqrt(r * r + d * d - 2 * r * d * cos(gamma));
       float alpha = asin(d * sin(gamma) / l) + j * TWO_PI / 3;
-      points.add(new Points(l * cos(alpha), (- l * sin(alpha))*-1));
+      points.add(new Points(l * cos(alpha), (- l * sin(alpha))*-1, i+degrees(j * TWO_PI / 3)));
     }
 
   minXY();
@@ -351,9 +354,12 @@ void setup() {
   strokeWeight(3);
   stroke(255, 0, 0);
 
-  for (int i=0; i<363; i++) {
+  for (int i=0; i<360; i++) {
     strokeWeight(10);
     stroke(i, 100, 100);
+    if(points.get(i).angle == 283){
+      strokeWeight(50);
+    }
     point((points.get(i).xCoord - xmin), (points.get(i).yCoord - ymin));
   }
   
@@ -442,7 +448,7 @@ void setup() {
       strokeWeight(20);
       stroke(0, 100, 100);
       point(-xmin, -ymin);
-      save("out/enveloppeConcaveNew.png");
+      save("out/enveloppeConcaveNew2.png");
     }
   }else{
     save("out/LidarPicture.png");
@@ -466,7 +472,7 @@ void draw(){
     stroke(255, 0, 0);
     frameRate(6);
 
-    for (int i=0; i<363; i++) {
+    for (int i=0; i<360; i++) {
       strokeWeight(10);
       stroke(i, 100, 100);
       point((points.get(i).xCoord - xmin), (points.get(i).yCoord - ymin));

@@ -1,9 +1,17 @@
 class Points implements Comparable<Points>{
     float xCoord, yCoord;
+    float angle;
     
+    Points(float x, float y, float a ){
+        xCoord = x;
+        yCoord = y;
+        angle=a;
+    }
+
     Points(float x, float y){
         xCoord = x;
         yCoord = y;
+        angle=0;
     }
 
     @Override
