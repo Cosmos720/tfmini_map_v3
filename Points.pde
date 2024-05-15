@@ -11,7 +11,7 @@ class Points implements Comparable<Points>{
     Points(float x, float y){
         xCoord = x;
         yCoord = y;
-        angle=0;
+        angle=-1;
     }
 
     @Override
@@ -49,6 +49,6 @@ class Points implements Comparable<Points>{
     
     @Override
     String toString(){
-      return String.format("(%.1f, %.1f)",xCoord, yCoord);
+      return String.format("(%.1f, %.1f): %.1f",xCoord, yCoord, angle);
     }
 }

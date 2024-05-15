@@ -302,13 +302,13 @@ ArrayList<Edge> sortEdgeHull(ArrayList<Edge> hull, Points min){
         continue loop;
       }
     }
-    println("nothing found");
+    //println("nothing found");
     break;
   }
   return sortedHull;
 }
 
-ArrayList<Points> main(String logPath, String name) {
+ArrayList<Points> main(String logPath, String name, float xdecal, float ydecal, float adecal) {
   BufferedReader log = createReader(logPath);
   String line = null;
   angles = new FloatList();
@@ -332,15 +332,15 @@ ArrayList<Points> main(String logPath, String name) {
   }
 
   points = new ArrayList<Points>();
-  float r = 18;
+  float r = 20;
 
   for (int i=0; i<120; i++)
     for (int j=0; j<3; j++) {
-      float gamma = PI - radians(i - 60);
+      float gamma = radians(i - 60);
       int d = mesures[i][j];
-      float l = sqrt(r * r + d * d - 2 * r * d * cos(gamma));
-      float alpha = asin(d * sin(gamma) / l) + j * TWO_PI / 3;
-      points.add(new Points(l * cos(alpha), (- l * sin(alpha))*-1, i+degrees(j * TWO_PI / 3)));
+      float l = sqrt(r * r + d * d + 2 * r * d * cos(gamma));
+      float alpha = asin((d * sin(gamma)) / l) + ((PI/3)+j * TWO_PI / 3)+ adecal;
+      points.add(new Points(l * cos(alpha)+xdecal, (- l * sin(alpha))*-1+ydecal, i+degrees(j * TWO_PI / 3)));
     }
 
   minXY();
@@ -487,8 +487,11 @@ void setup(){
   size(1000, 1000);
   scale(0.25);
   translate(100, 150);
-  ArrayList<Points> array1 = main("../LaLigneRouge_v2_0/output/LIDAR.log", "enveloppeConcaveNew");
-  ArrayList<Points> array2 = main("../LaLigneRouge_v2_0/output/LIDAR2.log", "enveloppeConcaveNew2");
+  ArrayList<Points> array2 = main("../LaLigneRouge_v2_0/output/LIDAR2.log", "enveloppeConcaveNew2", 0, 0, 0); //décaler de 45°
+  ArrayList<Points> array1 = main("../LaLigneRouge_v2_0/output/LIDAR1.log", "enveloppeConcaveNew", 0, 0, 0);
+  println("array1: " + array1);
+  println("array2: " + array2 + " (décaler de 45°)");
+  clustering(array1, array2);
 }
 
 //debug
