@@ -13,7 +13,12 @@ ArrayList<Points> douglasPeucker(ArrayList<Points> array, float epsilon){
         ArrayList<Points> res1 = douglasPeucker(new ArrayList<Points>(array.subList(0,index+1)), epsilon);
         ArrayList<Points> res2 = douglasPeucker(new ArrayList<Points>(array.subList(index,array.size())), epsilon);
         ArrayList<Points> res = new ArrayList<Points>(res1);
-        res.addAll(res2);
+        //res.addAll(res2);
+        for(Points p:res2){
+            if(!res.contains(p)){
+                res.add(p);
+            }
+        }
         return res;
     }else{
         ArrayList<Points> res = new ArrayList<Points>();
@@ -38,5 +43,8 @@ Object[] hullDivider(ArrayList<Points> array){
         return null;
     }
     int idx = array.indexOf(p2);
-    return new Object[]{new ArrayList<Points>(array.subList(0, idx+1)), new ArrayList<Points>(array.subList(idx, array.size()))};
+    ArrayList<Points> res1 = new ArrayList<Points>(array.subList(0, idx+1));
+    ArrayList<Points> res2 = new ArrayList<Points>(array.subList(idx, array.size()));
+    res2.add(array.get(0));
+    return new Object[]{res1, res2};
 }

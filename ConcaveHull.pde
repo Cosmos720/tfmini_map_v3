@@ -169,7 +169,7 @@ ArrayList<Edge> computeConcaveHullFromConvexe(ArrayList<Points> pointsList, floa
   for(int i = hull.length-1; i>=0; i--){
     points.remove(hull[i]);
   }
-  
+
   /*
   stroke(16, 100, 100, 10);
   for(int i=0; i<convexeHull.size(); i++){
@@ -211,6 +211,38 @@ ArrayList<Edge> computeConcaveHullFromConvexe(ArrayList<Points> pointsList, floa
   for(int i = del.size()-1; i>=0; i--){
     concaveHull.remove(del.get(i));
   }
+
+  concaveHull = sortEdgeHull(concaveHull, pointsList.get(0));
+
+  for (int i = 0; i < concaveHull.size(); ++i) {
+    Edge edge = concaveHull.get(i);
+    if(abs(edge.point2.angle-edge.point1.angle) != 1){
+      Points inter = intersectionPoint(concaveHull.get((i-1)<0?concaveHull.size()-1:i-1), concaveHull.get((i+1)%concaveHull.size()));
+      if(inter==null){
+        continue;
+      }
+      float[] e1 = edge.point1.vectorize(inter);
+      float[] e2 = inter.vectorize(edge.point2);
+      float prodScal = e1[0]*e2[0]+e1[1]*e2[1];
+      float e1Norm = sqrt(sq(e1[0])+sq(e1[1]));
+      float e2Norm = sqrt(sq(e2[0])+sq(e2[1]));
+      float angle = degrees(acos(prodScal/(e1Norm*e2Norm)));
+      if(angle<45 || angle>135){
+        continue;
+      }
+      ArrayList<Points> concaveHullPts = new ArrayList<Points>();
+      for (Edge e : concaveHull) {
+        concaveHullPts.add(e.point1);
+      }
+      if(!pointInPolygonQ(inter, concaveHullPts)){
+        concaveHull.remove(edge);
+        concaveHull.add(i, new Edge(edge.point1, inter));
+        concaveHull.add(i+1, new Edge(inter, edge.point2));
+        i++;
+      }
+    }
+  }
+  
   return concaveHull;
 }
 
@@ -272,6 +304,35 @@ float distEdge(Points p, Edge e){
     return abs(s)*e.distance();
   }
 }
+
+Points intersectionPoint(Edge ab, Edge cd){
+  Points a = ab.point1;
+  Points b = ab.point2;
+  Points c = cd.point1;
+  Points d = cd.point2;
+  float[] AB = a.vectorize(b);
+  float[] CD = c.vectorize(d);
+
+  float[] AC = a.vectorize(c);
+
+  float divisor = AB[0] * CD[1] - AB[1] * CD[0];
+
+  if (divisor == 0){
+    // Les droites sont parallèles ou coïncident
+    return null;
+  }
+
+  float t = (AC[0] * CD[1] - AC[1] * CD[0]) / divisor;
+  float u = (AC[0] * AB[1] - AC[1] * AB[0]) / divisor;
+
+  if ((t < 0 || t > 1) || (u < 0 || u > 1)){
+    float[] intersection = {a.xCoord + t * AB[0], a.yCoord + t * AB[1]};
+    return new Points(intersection[0], intersection[1], (b.angle+c.angle)/2);
+  }else{
+    return null;
+  }
+}
+
 
 boolean pointInPolygonQ(Points p, ArrayList<Points> hull){
   Points ray = new Points(p.xCoord, findMinYPoint(hull).yCoord-1);

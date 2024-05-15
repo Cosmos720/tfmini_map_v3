@@ -296,7 +296,7 @@ ArrayList<Edge> sortEdgeHull(ArrayList<Edge> hull, Points min){
   loop:
   for(int i=0; i<hull.size(); i++){
     for(Edge e: hull){
-      if(sortedHull.get(i).point2.equals(e.point1)){
+      if(sortedHull.get(i).point2.equals(e.point1) && !sortedHull.contains(e)){
         sortedHull.add(e);
         //println("found" + e);
         continue loop;
@@ -308,10 +308,8 @@ ArrayList<Edge> sortEdgeHull(ArrayList<Edge> hull, Points min){
   return sortedHull;
 }
 
-void setup() {
-  size(1000, 1000);
-  scale(0.25);
-  BufferedReader log = createReader("../LaLigneRouge_v2_0/output/LIDAR.log");
+ArrayList<Points> main(String logPath, String name) {
+  BufferedReader log = createReader(logPath);
   String line = null;
   angles = new FloatList();
   mesures = new int[120][3];
@@ -350,16 +348,17 @@ void setup() {
 
   colorMode(HSB, 360, 100, 100);
   background(255);
-  translate(50, 50);
   strokeWeight(3);
   stroke(255, 0, 0);
 
   for (int i=0; i<360; i++) {
     strokeWeight(10);
     stroke(i, 100, 100);
-    if(points.get(i).angle == 283){
+    /*
+    if(points.get(i).angle == 350){
       strokeWeight(50);
     }
+    */
     point((points.get(i).xCoord - xmin), (points.get(i).yCoord - ymin));
   }
   
@@ -409,9 +408,8 @@ void setup() {
       int after = millis();
       println("time in millis: "+(after-before));
       println("taille enveloppe = "+ concaveHull.size());
-      ArrayList<Edge> sortedHull = sortEdgeHull(concaveHull, points.get(0));
       ArrayList<Points> concaveHullPts = new ArrayList<Points>();
-      for (Edge e : sortedHull) {
+      for (Edge e : concaveHull) {
         concaveHullPts.add(e.point1);
       }
       for(int i=0; i<concaveHull.size(); i++){
@@ -444,19 +442,53 @@ void setup() {
         stroke(0, 100, 100, 75);
         line(res2.get(i).xCoord-xmin, res2.get(i).yCoord-ymin, res2.get((i+1)%(res2.size())).xCoord-xmin, res2.get((i+1)%(res2.size())).yCoord-ymin);
       }
-      println(concaveHullPts.size() + " points -> " + (res1.size() + res2.size() - 2) + " points");
+      println(concaveHullPts.size() + " points -> " + (res1.size() + res2.size()) + " points");
       strokeWeight(20);
       stroke(0, 100, 100);
       point(-xmin, -ymin);
-      save("out/enveloppeConcaveNew2.png");
+      concaveHullPts.clear();
+      concaveHullPts.addAll(res1);
+      for(Points p: res2){
+        if(!concaveHullPts.contains(p)){
+          concaveHullPts.add(p);
+        }
+      }
+      ArrayList<Points> pointL = new ArrayList<Points>();
+      for(int i=0; i<concaveHullPts.size(); i++){
+        float[] e1 = concaveHullPts.get(i).vectorize(concaveHullPts.get((i-1)<0?concaveHullPts.size()-1:i-1));
+        float[] e2 = concaveHullPts.get(i).vectorize(concaveHullPts.get((i+1)%concaveHullPts.size()));
+        float prodScal = e1[0]*e2[0]+e1[1]*e2[1];
+        float e1Norm = sqrt(sq(e1[0])+sq(e1[1]));
+        float e2Norm = sqrt(sq(e2[0])+sq(e2[1]));
+        float angle = degrees(acos(prodScal/(e1Norm*e2Norm)));
+        //println(concaveHullPts.get(i) +" : "+angle);
+        if(angle>70 && angle<110){
+          strokeWeight(30);
+          stroke(0, 0, 0);
+          point(concaveHullPts.get(i).xCoord-xmin, concaveHullPts.get(i).yCoord-ymin);
+          pointL.add(concaveHullPts.get(i));
+        }
+      }
+
+      after = millis();
+      println("time in millis global: "+(after-before));
+      save("out/" + name +".png");
+      return pointL;
     }
   }else{
     save("out/LidarPicture.png");
     println(points);
   }
-  if(!debug){
-    exit();
-  }
+  return null;
+}
+
+
+void setup(){
+  size(1000, 1000);
+  scale(0.25);
+  translate(100, 150);
+  ArrayList<Points> array1 = main("../LaLigneRouge_v2_0/output/LIDAR.log", "enveloppeConcaveNew");
+  ArrayList<Points> array2 = main("../LaLigneRouge_v2_0/output/LIDAR2.log", "enveloppeConcaveNew2");
 }
 
 //debug
