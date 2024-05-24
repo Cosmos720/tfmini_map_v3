@@ -62,7 +62,6 @@ ArrayList<Points> computeConcaveHull(ArrayList<Points> pointsList, int k) {
 }
 
 // *iteratively
-//! Je suis BLOQUÉ
 /*
 ArrayList<Points> computeConcaveHullNew(ArrayList<Points> pointsList, int k){
   int nb=0;

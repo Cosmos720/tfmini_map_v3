@@ -361,6 +361,9 @@ ArrayList<Points> main(String logPath, String name, float xdecal, float ydecal, 
     */
     point((points.get(i).xCoord - xmin), (points.get(i).yCoord - ymin));
   }
+  strokeWeight(20);
+  stroke(0, 100, 100);
+  point(-xmin, -ymin);
   
   if(convexe & !pict){
     int[] enveloppe = computeEnveloppe();
@@ -443,9 +446,6 @@ ArrayList<Points> main(String logPath, String name, float xdecal, float ydecal, 
         line(res2.get(i).xCoord-xmin, res2.get(i).yCoord-ymin, res2.get((i+1)%(res2.size())).xCoord-xmin, res2.get((i+1)%(res2.size())).yCoord-ymin);
       }
       println(concaveHullPts.size() + " points -> " + (res1.size() + res2.size()) + " points");
-      strokeWeight(20);
-      stroke(0, 100, 100);
-      point(-xmin, -ymin);
       concaveHullPts.clear();
       concaveHullPts.addAll(res1);
       for(Points p: res2){
@@ -487,11 +487,73 @@ void setup(){
   size(1000, 1000);
   scale(0.25);
   translate(100, 150);
+  if(convexe || pict || algo1){
+    main("../LaLigneRouge_v2_0/output/LIDAR1.log", "enveloppeConcaveNew", 0, 0, 0);
+    return;
+  }
+  int t = millis();
   ArrayList<Points> array2 = main("../LaLigneRouge_v2_0/output/LIDAR2.log", "enveloppeConcaveNew2", 0, 0, 0); //décaler de 45°
   ArrayList<Points> array1 = main("../LaLigneRouge_v2_0/output/LIDAR1.log", "enveloppeConcaveNew", 0, 0, 0);
   println("array1: " + array1);
   println("array2: " + array2 + " (décaler de 45°)");
-  clustering(array1, array2);
+
+
+  float[][] data = clustering(array1, array2);
+  ArrayList<float[]> dataList = new ArrayList<>();
+  for (float[] element : data) {
+    if (element[1] >= 0.9 && element[1] <= 1.1) {
+      dataList.add(element);
+    }
+  }
+  data = dataList.toArray(new float[dataList.size()][]);
+  println("data after filter: ");
+  for(float[] element : data){
+    int i = 0;
+    for(float value : element){
+      print("["+i+"] "+value + " ");
+      i++;
+    }
+    println();
+  }
+  int[] cluster = dbscan(data, 60, 2);
+  println("cluster: ");
+  for(int element : cluster){
+    print(element + " ");
+  }
+  println();
+  int n = max(cluster);
+  int[] clusterCount = new int[n];
+  float[] thetaG = new float[n];
+  float[] deltaXG = new float[n];
+  float[] deltaYG = new float[n];
+
+  for (int i = 0; i < cluster.length; i++) {
+    int clusterIndex = cluster[i] - 1;
+    if (clusterIndex >= 0 && clusterIndex < n) {
+      clusterCount[clusterIndex]++;
+      thetaG[clusterIndex] += data[i][0];
+      deltaXG[clusterIndex] += data[i][2];
+      deltaYG[clusterIndex] += data[i][3];
+    }
+  }
+
+  for (int i = 0; i < n; i++) {
+    if (clusterCount[i] > 0) {
+      thetaG[i] /= clusterCount[i];
+      deltaXG[i] /= clusterCount[i];
+      deltaYG[i] /= clusterCount[i];
+    }
+  }
+
+  // print the cluster statistics
+  for (int i = 0; i < n; i++) {
+    println("Cluster " + (i + 1) + ":");
+    println("  Count: " + clusterCount[i]);
+    println("  Average theta: " + thetaG[i]);
+    println("  Average deltaX: " + deltaXG[i]);
+    println("  Average deltaY: " + deltaYG[i]);
+  }
+  println("time in millis: "+(millis()-t));
 }
 
 //debug
@@ -523,6 +585,7 @@ void draw(){
       point(concaveHull.get(i).point2.xCoord-xmin, concaveHull.get(i).point2.yCoord - ymin);
       strokeWeight(10);
       stroke(0, 0, 50);
+      
       line(concaveHull.get(i).point1.xCoord-xmin, concaveHull.get(i).point1.yCoord-ymin, concaveHull.get(i).point2.xCoord-xmin, concaveHull.get(i).point2.yCoord-ymin);
     }
     strokeWeight(10);
