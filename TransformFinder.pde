@@ -1,13 +1,28 @@
 float[][] clustering(ArrayList<Points> modelPoints, ArrayList<Points> scenePoints){
 
-  float[][] dataTransform = new float[modelPoints.size()*scenePoints.size()][4];
-  for(int i=0; i<modelPoints.size(); i++){
+  ArrayList<float[]> dataTransform = new ArrayList<float[]>();
+  /*for(int i=0; i<modelPoints.size(); i++){
     for(int j=0; j<scenePoints.size(); j++){
       dataTransform[i*scenePoints.size()+j] = transformCalcul(modelPoints.get(i), modelPoints.get((i+1)%modelPoints.size()), scenePoints.get(j), scenePoints.get((j+1)%scenePoints.size()));
       print("("+i+", "+j+")"+"[a] "+dataTransform[i*scenePoints.size()+j][0] + " [s] " + dataTransform[i*scenePoints.size()+j][1] + " [x] " + dataTransform[i*scenePoints.size()+j][2] + " [y] " + dataTransform[i*scenePoints.size()+j][3] + "\n");
     }
+  }*/
+  for(Points mi: modelPoints){
+    for(Points mj: modelPoints){
+      if(mj.equals(mi)){
+        continue;
+      }
+      for(Points si: scenePoints){
+        for(Points sj: scenePoints){
+          if(sj.equals(si)){
+            continue;
+          }
+          dataTransform.add(transformCalcul(mi, mj, si ,sj));
+        }
+      }
+    }
   }
-  return dataTransform;
+  return dataTransform.toArray(new float[dataTransform.size()][]);
 }
 
 float[] transformCalcul(Points modelA, Points modelB, Points sceneA, Points sceneB){

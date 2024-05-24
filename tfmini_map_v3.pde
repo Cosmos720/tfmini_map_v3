@@ -347,13 +347,13 @@ ArrayList<Points> main(String logPath, String name, float xdecal, float ydecal, 
   sortPoints();
 
   colorMode(HSB, 360, 100, 100);
-  background(255);
+  background(#ffffff);
   strokeWeight(3);
   stroke(255, 0, 0);
 
   for (int i=0; i<360; i++) {
     strokeWeight(10);
-    stroke(i, 100, 100);
+    stroke(0, 0, 0);
     /*
     if(points.get(i).angle == 350){
       strokeWeight(50);
