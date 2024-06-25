@@ -61,102 +61,6 @@ ArrayList<Points> computeConcaveHull(ArrayList<Points> pointsList, int k) {
   return hull;
 }
 
-// *iteratively
-/*
-ArrayList<Points> computeConcaveHullNew(ArrayList<Points> pointsList, int k){
-  int nb=0;
-  k = max(k, 3);
-  ArrayList<Points> dataset = cleanList(pointsList);
-  if(dataset.size()<3){
-    return null;
-  }
-  if(dataset.size()==3){
-    return dataset;
-  }
-  k = min(k, dataset.size()-1);
-  Points firstPoint = findMinYPoint(dataset);
-  ArrayList<Points> hull = new ArrayList<Points>();
-  hull.add(firstPoint);
-  Points currentPoint = firstPoint;
-  dataset.remove(firstPoint);
-  float previousAngle = 0;
-  int step = 1;
-  boolean valid = false;
-  int kMAX = k;
-  int kNeigh = k;
-  ArrayList<Points> tmp = new ArrayList<Points>();
-  while(!valid){
-    while((nb != nbIter) && ((currentPoint!=firstPoint) || (step==1)) && dataset.size()>0) {
-      nb++;
-      if(step==4){
-        dataset.add(firstPoint);
-      }
-      ArrayList<Points> kNearestPoints = nearestPoints(dataset, currentPoint, k);
-      ArrayList<Points> cPoints = sortByAngle(kNearestPoints, currentPoint, previousAngle);
-      boolean its = true;
-      int i = -1;
-      while ((its==true)&(i<cPoints.size()-1)) {
-        i++;
-        int lastPoint = 0;
-        if(cPoints.get(i).equals(firstPoint)){
-          lastPoint = 1;
-        }
-        int j = 1;
-        its = false;
-        while ((its==false)&(j<hull.size()-lastPoint-1)) {
-          its = intersectsQ(hull.get(step-1), cPoints.get(i), hull.get(step-j-1), hull.get(step-j));
-          j++;
-        }
-      }
-      if(its==true){
-        //println(step + " Que des intersections => iteration\n"+hull);
-        if(k>=kMAX){
-          step--;
-          tmp.add(currentPoint);
-          currentPoint = hull.get(step);
-          hull.remove(step);
-        } else {
-          k++;
-        }
-        continue;
-      }else{
-        k = kNeigh;
-      }
-      currentPoint = cPoints.get(i);
-      hull.add(currentPoint);
-      previousAngle = angleCW(hull.get(step-1), hull.get(step));
-      dataset.remove(currentPoint);
-      step++;
-    }
-    boolean allInside = true;
-    int i = dataset.size()-1;
-    while(allInside & i>0){
-      allInside = pointInPolygonQ(dataset.get(i), hull);
-      i--;
-    }
-    if(!allInside & nb < nbIter){
-      //println(step + " not all inside => recompute\n"+hull);
-      step--;
-      currentPoint = hull.get(step);
-      //println(step + " " + currentPoint);
-      hull.remove(step);
-      if(currentPoint == firstPoint){
-        //println("remove et add first");
-        dataset.add(firstPoint);
-      }
-      kMAX++;
-      dataset.addAll(tmp.isEmpty()?tmp:cleanList(tmp));
-      tmp.clear();
-      continue;
-    }else{
-      println("allInside:" + allInside);
-      valid = true;
-    }
-  }
-  println(k + " " + kMAX);
-  return hull;
-}
-*/
 ArrayList<Edge> computeConcaveHullFromConvexe(ArrayList<Points> pointsList, float n){
   ArrayList<Points> points = (ArrayList<Points>)pointsList.clone();
   int[] hull = computeEnveloppe();
@@ -199,7 +103,7 @@ ArrayList<Edge> computeConcaveHullFromConvexe(ArrayList<Points> pointsList, floa
       break;
     }*/
     float eh = concaveHull.get(i).distance();
-    float dd = distEdge(pk, concaveHull.get(i));//decisionDistance(pk, concaveHull.get(i));
+    float dd = distEdge(pk, concaveHull.get(i));
     if ((eh/dd)>n){
       del.append(i);
       concaveHull.add(new Edge(concaveHull.get(i).point1, pk));
@@ -213,6 +117,7 @@ ArrayList<Edge> computeConcaveHullFromConvexe(ArrayList<Points> pointsList, floa
 
   concaveHull = sortEdgeHull(concaveHull, pointsList.get(0));
 
+  // Ajout des points cachés aux coins de l'enveloppe calculée
   for (int i = 0; i < concaveHull.size(); ++i) {
     Edge edge = concaveHull.get(i);
     if(abs(edge.point2.angle-edge.point1.angle) != 1){
@@ -289,6 +194,10 @@ Edge[] neighborsEdge(Edge e, ArrayList<Edge> edges, IntList del){
             (Ay-Cy)(Bx-Ax)-(Ax-Cx)(By-Ay)
         s = -----------------------------
                         L^2
+
+            (Cx-Ax)(Bx-Ax)+(Cy-Ay)(By-Ay)
+        r = -----------------------------
+                        L^2
 */
 float distEdge(Points p, Edge e){
   ////return min(p.distance(e.point1), p.distance(e.point2));
@@ -364,28 +273,12 @@ float prodVec(float[] v1, float[] v2){
   return v1[0]*v2[1] - v1[1]*v2[0];
 }
 
-/*
-ArrayList<Points> sortByAngle(ArrayList<Points> data, Points pivot, float prevAngle){
-  ArrayList<Points> tmp = (ArrayList<Points>)data.clone();
-  tmp.sort((p1, p2) -> ((angleCW(pivot, p1)+(180-prevAngle))-(angleCW(pivot, p2)+(180-prevAngle))<0?1:-1));
-  return tmp;
-}
-
-// angle Op1p2
-float angleCW(Points pivot, Points destination){
-  float angle = degrees(atan2((destination.yCoord - pivot.yCoord), (destination.xCoord - pivot.xCoord)));
-  return angle-360<=360?angle-360:-angle;
-}
-*/
-
-// GH = on ajoute 360 et on calcule % 360 pour se ramener dans [0..360]
 ArrayList<Points> sortByAngle(ArrayList<Points> data, Points pivot, float prevAngle){
   ArrayList<Points> tmp = (ArrayList<Points>)data.clone();
   tmp.sort((p1, p2) -> (((angleCW(pivot, p1)-prevAngle+540)%360) < ((angleCW(pivot, p2)-prevAngle+540)%360) ? 1 : -1));
   return tmp;
 }
 
-// GH = on renvoie simplement le résultat de atan2
 // angle Op1p2
 float angleCW(Points pivot, Points destination){
   float angle = degrees(atan2((destination.yCoord - pivot.yCoord), (destination.xCoord - pivot.xCoord)));
@@ -411,16 +304,6 @@ Points findMinYPoint(ArrayList<Points> list){
   tmp.sort((p1, p2) -> p1.compareTo(p2));
   return tmp.get(0);
 }
-/*
-boolean contains(ArrayList<Points> list, Points p) {
-  for (int i=1; i<list.size(); i++) {
-    if ((list.get(i).xCoord == p.xCoord) &&
-      (list.get(i).yCoord == p.yCoord))
-      return true;
-    }
-    return false;
-}
-*/
 
 ArrayList<Points> cleanList(ArrayList<Points> list){
   ArrayList<Points> pointsSet = new ArrayList<Points>();
@@ -429,9 +312,6 @@ ArrayList<Points> cleanList(ArrayList<Points> list){
     if(!pointsSet.contains(list.get(i))){
       pointsSet.add(list.get(i));
     }
-    /*if(!contains(pointsSet, list.get(i))){
-      pointsSet.add(list.get(i));
-    }*/
   }
   return pointsSet;
 }

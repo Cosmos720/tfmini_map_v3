@@ -92,7 +92,10 @@ void expandCluster(float[][] data, int[] cluster, int pointIndex, ArrayList<Inte
     }
   }
 }
-
+ //changer calcul et remettre entre 0-360
 float calculateDistance(float[] pointA, float[] pointB){
+  if (abs(pointA[0]-pointB[0])>=180) {
+    return sqrt(pow(abs(pointA[0]-pointB[0])-360, 2) + pow(pointA[2]-pointB[2], 2) + pow(pointA[3]-pointB[3], 2));
+  }
   return sqrt(pow(pointA[0]-pointB[0], 2) + pow(pointA[2]-pointB[2], 2) + pow(pointA[3]-pointB[3], 2));
 }
